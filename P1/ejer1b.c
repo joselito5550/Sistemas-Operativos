@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
                 exit(EXIT_FAILURE);
 
           case 0: /* proceso hijo */
-          printf("\nProceso (%d); mi padre = %d \n", getpid(), getppid());
+          printf("Proceso (%d); mi padre = %d \n", getpid(), getppid());
                 break;
           default: /* padre */
                 // printf("PADRE: He tenido un hijo con pid:%d\n",pid);
