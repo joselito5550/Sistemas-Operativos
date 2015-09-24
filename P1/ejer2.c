@@ -19,7 +19,7 @@ int main(){
 
         case 0: /* proceso hijo */
             printf("ProcesoHIJO %d; mi padre = %d \n", getpid(), getppid());
-
+            exit(EXIT_SUCCESS);
 
         default: /* padre */
             sleep(20);
