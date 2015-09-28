@@ -16,6 +16,7 @@ int main(int argc, char **argv){
                fprintf(f," %s", "++++++++++++\n");
                sleep(1);
          }
+         //son close file
          fclose(f);
          exit(EXIT_SUCCESS);
    }
@@ -26,6 +27,7 @@ int main(int argc, char **argv){
          }
    }
    wait(&status);
+   //dad close file
    fclose(f);
     exit(EXIT_SUCCESS);
 }
