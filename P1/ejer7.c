@@ -4,6 +4,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <signal.h>
+
+static void sig_alarm(int signo){
+      return;
+}
+
+unsigned int sleep1(unsigned int nsecs){
+      
+}
 
 int main(int argc, char **argv) {
     int global = 0;
