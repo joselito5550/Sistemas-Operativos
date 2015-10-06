@@ -19,14 +19,23 @@ void *show_messages (void * mensa)
   pthread_exit(NULL); //Fin de la hebra sin devolver nada
 }
 
-int main()
+int main(int argc, char **argv)
 {
+  //Check
+  if(argc!=3){
+    printf("./ejer1 first_word second_word\n");
+    exit(-1);
+  }
+
 	//Declaración de dos hebras, hilos o procesos ligeros. NO CREACION
 	pthread_t thd1, thd2;
 
   //Create the param to the threads
-  char param1[TAM] = "hola";
-  char param2[TAM] = "mundo";
+  char param1[TAM];
+  char param2[TAM];
+
+  strcpy(param1,argv[1]);
+  strcpy(param2,argv[2]);
 
 	/*Creamos dos hilos. La función la pasaremos como (void *) nombreFuncion. Es decir,
   hacemos un casting a (void *), aunque por defecto no es necesario, ya que el nombre
