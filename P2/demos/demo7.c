@@ -25,9 +25,9 @@ int main(void)
    sería 7, pues ya se habría liberado el estado, variables y demás, de la hebra detach, en caso contrario,
    si el join se ejecuta antes de que termine la hebra detach, el join no dará error y devolvería
    el valor 10. De ahí que no se deba utilizar el join con una hebra detach para evitar inconsistencias. */
-   
+   sleep(3);
    error=pthread_join(thr,(void **) &ret);
-  
+
    if(error!=0)
       printf("Se ha producido un error en pthread_join()\n");
 
