@@ -12,7 +12,6 @@ void *show_messages (void * mensa)
   int i=0;
   char* word = (char *)mensa;
   for(i=0;i<strlen(word);i++){
-    sleep(1);
     printf("%c\n",word[i]);
     sleep(1);
   }
