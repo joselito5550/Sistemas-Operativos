@@ -5,50 +5,67 @@
 #include <string.h>
 #include <time.h>
 
-#define TAM 100
+#define TAM 10
 
-void *sumvector(void *vector)
-{
-    int *random1;
-    int *random2;
-    int i = *((int *)parametro);
-    random1 = (int *)malloc(sizeof(int));
-    random2 = (int *)malloc(sizeof(int));
-    *random1 = rand()%10;
-    *random2 = rand()%10;
-    printf("Soy una hebra, devuelvo %d + %d = %d\n",*random1,*random2,*random1+*random2);
-    *random1 = *random1 + *random2;
-    pthread_exit((void *)random1);
+typedef struct param {
+    int indice;
+    int *mivector;
+    int num_elementos;
+} the_param;
+
+void *sumvector(void *structura){
+    int i;
+    int *suma = (int *)malloc(sizeof(int));
+    the_param *aux;
+    aux = (the_param *)structura;
+    int indice = (*aux).indice;
+    int num_elementos = (*aux).num_elementos;
+    num_elementos = num_elementos+indice;
+    for(i=indice;i<num_elementos;i++){
+        *suma= *suma+(*aux).mivector[i];
+        printf("Sumando vector[%d]=%d ---> suma total = %d\n",i,aux->mivector[i],*suma );
+    }
+    pthread_exit((void *)suma);
 }
 
 int main(int argc, char **argv)
 {
-    //Check
-     if(argc!=2){
-         printf("./ejer1 N_hebras\n");
-         exit(-1);
-     }
-     int i;
-     void *num;
-     int sum_threads = 0;
-     int num_thread = atoi(argv[1]);
-     int vector[10];
-     for (i=0;i<10;i++){
-         vector[i]=i;
-     }
-	//Declaración de dos hebras, hilos o procesos ligeros. NO CREACION
-    pthread_t hebras[10];
-
-    //create the threads
-    for(i=0;i<num_thread;i++){
-        pthread_create(&(hebras[i]),NULL,sumvector,(void *)vector);
+    if(argc != 2){
+        printf("./ejer3 Numero_hebras\n");
+        exit(0);
     }
 
-    for(i=0;i<num_thread;i++){
-        pthread_join(hebras[i],(void **)&num);
-        sum_threads=sum_threads+*(int *)num;
-        printf("Me han devuelto %d con id: %d\n",*(int *)num, i);
-        //sum_threads+=*num;
+    int NH = atoi(argv[1]);
+    int mivector[TAM];
+    int i,num;
+    pthread_t hebras[TAM];
+    the_param aux;
+    the_param array[TAM];
+
+    for(i=0;i<TAM;i++){
+        mivector[i] = 1;
+        printf("vector[%d]=%d\n",i,mivector[i]);
     }
-    printf("Soy el main la suma de todos es: %d\n",sum_threads);
+    aux.mivector = mivector;
+    num = TAM/NH;
+    aux.num_elementos = num;
+    for(i=0;i<NH;i++){
+        aux.indice = i*num;
+        if (i==NH-1){
+            aux.num_elementos += (TAM%NH);
+        }
+        array[i] = aux;
+        pthread_create(&(hebras[i]),NULL,(void *)sumvector,(void *)&array[i]);
+
+    }
+
+    int *suma;
+    int suma_total = 0 ;
+    for(i=0;i<NH;i++){
+        pthread_join(hebras[i],(void **)&suma);
+        printf("Suma recibida del hilo: %d ----> %d \n",i,*suma );
+        suma_total+=(*suma);
+    }
+    printf("Suma total = %d\n",suma_total );
+
 }

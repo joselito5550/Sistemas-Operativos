@@ -26,7 +26,7 @@ int main(int argc, char **argv)
     srand(time(NULL));
   //Check
      if(argc!=2){
-         printf("./ejer1 N_hebras\n");
+         printf("./ejer2 N_hebras\n");
          exit(-1);
      }
      int i;
@@ -39,10 +39,9 @@ int main(int argc, char **argv)
     //create the threads
     for(i=0;i<num_thread;i++){
         pthread_create(&(hebras[i]),NULL,random_num,(void *)&i);
-        //wait the threads
-
     }
 
+    //wait the threads
     for(i=0;i<num_thread;i++){
         pthread_join(hebras[i],(void **)&num);
         sum_threads=sum_threads+*(int *)num;
