@@ -1,97 +1,74 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-#define NUMTHRDS 3
+#include <time.h>
+#define NUMTHRDS 5
 #define VECLEN 3
-/*
- The following structure contains the necessary information to allow the function "dotprod" to access its input data and place its output into the structure. */
-typedef struct {
-    int *a;
-    int *b;
-    int sum; int veclen;
-} DOTDATA;
 
-/* Define globally accessible variables and a mutex */
-DOTDATA dotstr;
-pthread_t callThd[NUMTHRDS];
-pthread_mutex_t mutexsum;
-/*
- The function dotprod is activated when the thread is created. As before, all input to this routine is obtained from a structure of type DOTDATA and all output from this function is written into this structure. The benefit of this approach is apparent for the multi-threaded program: when a thread is created we pass a single argument to the activated function - typically this argument is a thread number. All the other information required by the function is accessed from the globally accessible structure.
- */
-void *dotprod(void *arg)
-{
-    /* Define and use local variables for convenience */
-	int i, start, end, len;
-    long offset;
-    int mysum, *x, *y;
-    offset = *(long *)arg;
-    len = dotstr.veclen;
-	start = offset*len;
-	end = start + len;
-	x = dotstr.a;
-    y = dotstr.b;
-    /*
-     Perform the dot product and assign result to the appropriate variable in the structure. */
-    mysum = 0;
-    for (i=start; i<end ; i++) {
-		printf("\nThread %ld x[%d]=%d y[%d]=%d\n", offset, i, x[i], i, y[i]);
-        mysum += (x[i] * y[i]);
-	}
-    /*
-     Lock a mutex prior to updating the value in the shared structure, and unlock it upon updating.
-     */
-    pthread_mutex_lock (&mutexsum);
+int camisetas[5];
+pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 
-    dotstr.sum += mysum;  // Actualizo la variable global
-    printf("\nThread %ld did %d to %d: mysum=%d global sum=%d\n",offset,start,end-1,mysum,dotstr.sum);
 
-	pthread_mutex_unlock (&mutexsum);
-
-    pthread_exit((void*) 0);
+void * Cliente(){
+  int s = pthread_mutex_lock(&mtx);
+  if(s!=0)
+    printf("Mutex_lock error...\n");
+  //Seccion critica
+  printf("Soy la hebra ... voy a acceder a la seccion critica\n");
+  int i = rand()%5;
+  camisetas[i] = camisetas[i] - 1;
+  printf("[CLIENTE]  Modelo=%d, quedan %d unidades\n",i,camisetas[i]);
+  //Desbloqueamos el semaforo
+  printf("Thread %ld pongo el semaforo en verde\n", (unsigned long) pthread_self()); s = pthread_mutex_unlock(&mtx); /*Unlock the mutex*/
+  if (s != 0)
+      printf("mutex_unlock error...\n");
 }
-/*
- The main program creates threads which do all the work and then print out result upon completion. Before creating the threads, The input data is created. Since all threads update a shared structure, we need a mutex for mutual exclusion. The main thread needs to wait for all threads to complete, it waits for each one of the threads. We specify a thread attribute value that allow the main thread to join with the threads it creates. Note also that we free up handles when they are no longer needed.
- */
+
+
+void * Proveedor(){
+  int s = pthread_mutex_lock(&mtx);
+  if(s!=0)
+    printf("Mutex_lock error...\n");
+  //Seccion critica
+  printf("Soy la hebra ... (proveedor)voy a acceder a la seccion critica\n");
+  int i = rand()%5;
+  camisetas[i] = camisetas[i] + 1;
+  printf("[PROVEEDOR] Modelo=%d, ahora hay %d unidades\n",i,camisetas[i]);
+  //Desbloqueamos el semaforo
+  printf("Thread %ld pongo el semaforo en verde\n", (unsigned long) pthread_self()); s = pthread_mutex_unlock(&mtx); /*Unlock the mutex*/
+  if (s != 0)
+      printf("mutex_unlock error...\n");
+}
+
+
 int main (int argc, char *argv[])
 {
-    long i[NUMTHRDS],j;
-    int *a, *b;
-    void *status; pthread_attr_t attr;
+    if(argc!=2){
+        printf("./ejer1 Num_Clientes");
+        exit -1;
+    }
     srand(time(NULL));
-    /* Assign storage and initialize values */
-    a = (int*) malloc (NUMTHRDS*VECLEN*sizeof(int));
-	b = (int*) malloc (NUMTHRDS*VECLEN*sizeof(int));
-	for (j=0; j<VECLEN*NUMTHRDS; j++)
-    {
-        a[j]=rand()%11;
-        b[j]=rand()%11;
-	}
-    printf("a:\t");
+    printf("Tomamos como ejejmplo solo a 5 proveedores\n");
+    int num_proveedores = 5;
+    int num_clientes = atoi(argv[1]);
+    pthread_t hilos_Clientes[NUMTHRDS];
+    pthread_t hilos_Proveedores[NUMTHRDS];
+    int i;
 
-    for (j=0; j<VECLEN*NUMTHRDS; j++) printf("%d\t", a[j]);
-	printf("\nb:\t");
-    for (j=0; j<VECLEN*NUMTHRDS; j++) printf("%d\t", b[j]);
-    dotstr.veclen = VECLEN;
-	dotstr.a = a;
-    dotstr.b = b;
-	dotstr.sum=0;
-    pthread_mutex_init(&mutexsum, NULL);
+    //Rellenar el array de las camisetas
+    for(i=0;i<num_proveedores;i++){
+        camisetas[i] = 5;
+    }
 
-    /* Create threads to perform the dotproduct */
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-    /* Each thread works on a different set of data.
-     * The offset is specified by 'i'. The size of
-     * the data for each thread is indicated by VECLEN. */
-    for(j=0;j<NUMTHRDS;j++) i[j]=j;
-
-    for(j=0;j<NUMTHRDS;j++)
-        pthread_create(&callThd[j], &attr, dotprod, (void *)&i[j]);
-    pthread_attr_destroy(&attr); /* Wait on the other threads */
-    for(j=0;j<NUMTHRDS;j++)
-		pthread_join(callThd[j], &status); //to complete errors...
-    /* After joining, print out the results and cleanup */ printf ("Sum = %d \n", dotstr.sum);
-    free (a);
-    free (b);
-    pthread_mutex_destroy(&mutexsum);
+    for(i=0;i<num_clientes;i++){
+      pthread_create(&(hilos_Clientes[i]),NULL,Cliente,NULL);
+      pthread_create(&(hilos_Proveedores[i]),NULL,Proveedor,NULL);
+    }
+    for(i=0;i<num_clientes;i++){
+      pthread_join(hilos_Clientes[i],NULL);
+      pthread_join(hilos_Proveedores[i],NULL);
+    }
+    for(i=0;i<5;i++){
+      printf("Camiseta[%d] = %d\n",i,camisetas[i]);
+    }
 }
