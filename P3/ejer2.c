@@ -1,6 +1,10 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <errno.h>
 #include <time.h>
 #define NUMTHRDS 3
 #define VECLEN 3
@@ -18,6 +22,8 @@ void * funct_threads(void *argv){
   //Seccion critica
   for(i=0;i<5;i++){
   printf("%c", *caracter);
+  fflush(stdout);
+  sleep(1);
   }
   //Fin de la sección critica
   s = pthread_mutex_unlock(&mtx); /*Unlock the mutex*/
